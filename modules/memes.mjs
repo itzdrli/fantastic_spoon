@@ -14,7 +14,7 @@ export async function memes() {
 
         userImages.set(userId, photoId);
 
-        await ctx.reply('请输入图片的标题:');
+        await ctx.reply('Title: ');
     });
 
     bot.on(message('text'), async (ctx) => {
