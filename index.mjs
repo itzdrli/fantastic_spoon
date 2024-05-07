@@ -14,7 +14,7 @@ const token = process.env.TG_TOKEN
 export const bot = new Telegraf(token)
 
 bot.help((ctx) => ctx.reply('Commands\n /status - Get bot status\n'))
-bot.on(message('sticker'), (ctx) => ctx.reply('👍'))
+// bot.on(message('sticker'), (ctx) => ctx.reply('👍'))
 bot.hears('hi', (ctx) => ctx.reply('Hey there'))
 
 memes().then()
