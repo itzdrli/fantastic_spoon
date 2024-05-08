@@ -1,6 +1,5 @@
 node_modules/
 yarn.lock
-error.log
+logs/
 .yarn/
-latest.log
 .env

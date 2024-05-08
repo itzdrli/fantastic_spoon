@@ -1,75 +1,69 @@
-import { bot } from '../index.mjs'
-import { message } from "telegraf/filters";
+import { InlineKeyboard } from 'grammy';
+import { bot } from "../index.mjs"
+import { logger } from "../utils/logger.mjs";
+import { downloadAndProcessImage } from "../utils/downloadAndProcessImage.mjs";
+
+const userImages = new Map();
+
+const adminUserId = '5361485758';
+const channelId = '@itzdtech';
 
 export async function memes() {
-    const userImages = new Map();
-
-    const adminUserId = '5361485758';
-
-    const channelId = '@itzdtech';
-
-    bot.on(message('photo'), async (ctx) => {
+    bot.on(':photo', async (ctx) => {
         if (ctx.chat.type !== 'private') {
-            return
+            return;
         }
-        const userId = ctx.from.id;
-        const photoId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
+        const userId = ctx.from.id.toString();
+        const photoId = ctx.msg.photo.pop().file_id;
+        const username = ctx.from.username
+        console.log(username)
+        userImages.set(userId.toString(), { photoId, title: '', userId, username });
 
-        // 存储用户发送的图片
-        userImages.set(userId, { photoId, title: '' });
-
-        // 提示用户输入图片标题
         await ctx.reply('请输入图片的标题:');
     });
 
-    bot.on(message('text'), async (ctx) => {
-        const userId = ctx.from.id;
-        const title = ctx.message.text;
+    bot.on(':text', async (ctx) => {
+        const userId = ctx.from.id.toString();
+        const title = ctx.msg.text
+        const chatId = ctx.msg.chat.id;
 
-        // 检查用户是否发送过图片
         if (userImages.has(userId)) {
             const userData = userImages.get(userId);
             userData.title = title;
 
-            // 发送图片和标题给管理员审核
-            await ctx.telegram.sendPhoto(adminUserId, userData.photoId, {
+            await ctx.api.sendPhoto(adminUserId, userData.photoId, {
                 caption: `来自用户 ${userId} 的图片,标题: ${title}`,
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            { text: '批准', callback_data: `approve:${userId}` },
-                            { text: '拒绝', callback_data: `reject:${userId}` }
-                        ]
-                    ]
-                }
+                reply_markup: new InlineKeyboard().text('批准', `approve:${userId}`).row().text('拒绝', `reject:${userId}`)
             });
 
             await ctx.reply('图片已发送给管理员审核。');
         }
     });
 
-    bot.action(/^(approve|reject):(\d+)$/, async (ctx) => {
+    bot.callbackQuery(/^(approve|reject):(\d+)$/, async (ctx) => {
         const action = ctx.match[1];
-        const userId = parseInt(ctx.match[2]);
-
+        const userId = ctx.match[2];
         if (userImages.has(userId)) {
             const userData = userImages.get(userId);
 
             if (action === 'approve') {
-                // 将图片发送到指定频道
-                await ctx.telegram.sendPhoto(channelId, userData.photoId, {
-                    caption: "# " + userData.title
+                // Send the photo to the specified channel
+                await ctx.api.sendPhoto(channelId, userData.photoId, {
+                    caption: `# ${userData.title}\nvia @${userData.username}\n投 稿: @FantasticSpoonBot`
                 });
-                await ctx.answerCbQuery('图片已审核通过并发送到频道。');
+                await ctx.answerCallbackQuery('图片已审核通过并发送到频道。');
+                await ctx.api.sendMessage(userId, '您的图片已审核通过并发布。');
+                const res = await downloadAndProcessImage(userData.photoId, userData.title)
+                // await uploadToGitHub(res.buffer, res.title)
             } else {
-                await ctx.answerCbQuery('图片已被拒绝。');
+                await ctx.answerCallbackQuery('图片已被拒绝。');
+                await ctx.api.sendMessage(userId, '您的图片未通过审核。');
             }
 
-            // 清除存储的图片和标题
+            // Clear stored photo and title
             userImages.delete(userId);
         } else {
-            await ctx.answerCbQuery('未找到相关的图片数据。');
+            await ctx.answerCallbackQuery('未找到相关的图片数据。');
         }
     });
 }
-

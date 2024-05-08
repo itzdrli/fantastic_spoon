@@ -1,5 +1,7 @@
 import winston from 'winston'
 
+const date = new Date()
+const dateIso = date.toISOString().split('T')[0]
 export const logger = winston.createLogger({
     format: winston.format.combine(
         winston.format.timestamp({ format: 'MM-DD HH:mm:ss' }),
@@ -7,7 +9,6 @@ export const logger = winston.createLogger({
     ),
     transports: [
         new winston.transports.Console(),
-        new winston.transports.File({ filename: '../logs/error.log', level: 'error' }),
-        new winston.transports.File({ filename: '../logs/latest.log', level: 'info' }),
+        new winston.transports.File({ filename: `./logs/${dateIso}.log` }),
     ]
 });

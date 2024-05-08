@@ -1,18 +1,23 @@
 {
-  "name": "fantastic_spoon",
-  "packageManager": "yarn@4.2.1",
-  "dependencies": {
-    "dotenv": "^16.4.5",
-    "fs": "^0.0.1-security",
-    "os": "^0.1.2",
-    "path": "^0.12.7",
-    "telegraf": "^4.16.3",
-    "winston": "^3.13.0"
+  "devDependencies": {
+    "nodemon": "^3.1.0"
   },
+  "name": "fantastic_spoon",
+  "version": "1.0.0",
+  "main": "lib/index.js",
+  "repository": "https://github.com/itzdrli/fantastic_spoon.git",
+  "author": "itzdrli <liletian1231@outlook.com>",
+  "license": "AGPLv2",
+  "private": false,
   "scripts": {
     "dev": "nodemon index.mjs"
   },
-  "devDependencies": {
-    "nodemon": "^3.1.0"
+  "dependencies": {
+    "@octokit/rest": "^20.1.1",
+    "dotenv": "^16.4.5",
+    "grammy": "^1.22.4",
+    "node-fetch": "^3.3.2",
+    "sharp": "^0.33.3",
+    "winston": "^3.13.0"
   }
 }
