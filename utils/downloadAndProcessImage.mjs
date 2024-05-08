@@ -9,15 +9,15 @@ export async function downloadAndProcessImage(fileId, title) {
         const filePath = `https://api.telegram.org/file/bot${bot.token}/${pathResponse.file_path}`;
 
         const response = await fetch(filePath);
-        const imageData = await response.buffer()
+        const imageData = await response.arrayBuffer()
 
         const webpBuffer = await sharp(imageData)
             .webp()
             .toBuffer()
 
-        const outputFilePath = `/home/dev/koishi-meme/meme/image.webp`;
+        const outputFilePath = `/home/dev/koishi-meme/meme/${title}.webp`;
         fs.writeFileSync(outputFilePath, webpBuffer);
-        logger.notice("Successfully saved image")
+        logger.info("Successfully saved image")
     } catch (e) {
         logger.error("Error while trying to save the meme:", e)
     }

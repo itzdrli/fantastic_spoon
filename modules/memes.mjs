@@ -16,7 +16,6 @@ export async function memes() {
         const userId = ctx.from.id.toString();
         const photoId = ctx.msg.photo.pop().file_id;
         const username = ctx.from.username
-        console.log(username)
         userImages.set(userId.toString(), { photoId, title: '', userId, username });
 
         await ctx.reply('请输入图片的标题:');
@@ -25,7 +24,6 @@ export async function memes() {
     bot.on(':text', async (ctx) => {
         const userId = ctx.from.id.toString();
         const title = ctx.msg.text
-        const chatId = ctx.msg.chat.id;
 
         if (userImages.has(userId)) {
             const userData = userImages.get(userId);
@@ -53,8 +51,7 @@ export async function memes() {
                 });
                 await ctx.answerCallbackQuery('图片已审核通过并发送到频道。');
                 await ctx.api.sendMessage(userId, '您的图片已审核通过并发布。');
-                const res = await downloadAndProcessImage(userData.photoId, userData.title)
-                // await uploadToGitHub(res.buffer, res.title)
+                await downloadAndProcessImage(userData.photoId, userData.title)
             } else {
                 await ctx.answerCallbackQuery('图片已被拒绝。');
                 await ctx.api.sendMessage(userId, '您的图片未通过审核。');
