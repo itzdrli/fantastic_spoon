@@ -1,6 +1,6 @@
 {
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "pm2": "^5.3.1"
   },
   "name": "fantastic_spoon",
   "version": "1.0.0",
@@ -10,7 +10,7 @@
   "license": "AGPLv2",
   "private": false,
   "scripts": {
-    "dev": "nodemon index.mjs"
+    "dev": "pm2 start index.mjs --no-daemon --watch --restart-delay 2500"
   },
   "dependencies": {
     "@octokit/rest": "^20.1.1",
