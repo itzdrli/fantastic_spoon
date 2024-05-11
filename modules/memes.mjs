@@ -69,10 +69,9 @@ export async function memes() {
                     });
                     messageLink += res.message_id;
                 }
-                logger.info(messageLink)
-                await ctx.answerCallbackQuery('图片已审核通过并发送到频道.');
+                await ctx.answerCallbackQuery('图片已审核通过并发送到频道.')
+                await downloadAndProcessImage(userData.photoId, userData.title)
                 await ctx.api.sendMessage(userId, `您的图片已审核通过并发布.\n${messageLink}`);
-                // await downloadAndProcessImage(userData.photoId, userData.title)
             } else {
                 await ctx.answerCallbackQuery('图片已被拒绝.');
                 await ctx.api.sendMessage(userId, '您的图片未通过审核.');

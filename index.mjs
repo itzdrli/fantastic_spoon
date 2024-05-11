@@ -1,6 +1,7 @@
 import { Bot, GrammyError, HttpError } from "grammy";
 import { logger } from "./utils/logger.mjs"
 import dotenv from 'dotenv'
+import { generateUpdateMiddleware } from "telegraf-middleware-console-time";
 
 import { memes } from "./modules/memes.mjs";
 
@@ -21,6 +22,8 @@ bot.catch((err) => {
         logger.error("Unknown error:", e);
     }
 })
+
+bot.use(generateUpdateMiddleware());
 
 bot.command("start", (ctx) => ctx.reply("我是 Fantastic Spoon\n向我发送meme图片即可开始投稿",
     { parse_mode: "MarkdownV2" },))
