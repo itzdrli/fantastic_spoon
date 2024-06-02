@@ -1,6 +1,7 @@
 {
   "devDependencies": {
-    "pm2": "^5.3.1"
+    "pm2": "^5.3.1",
+    "prisma": "^5.14.0"
   },
   "name": "fantastic_spoon",
   "version": "1.0.0",
@@ -14,11 +15,17 @@
   },
   "dependencies": {
     "@octokit/rest": "^20.1.1",
+    "@prisma/client": "^5.14.0",
     "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "fs": "^0.0.1-security",
     "grammy": "^1.22.4",
+    "nanoid": "^5.0.7",
     "node-fetch": "^3.3.2",
-    "sharp": "^0.33.3",
+    "path": "^0.12.7",
+    "sharp": "^0.33.4",
     "telegraf-middleware-console-time": "^2.1.0",
     "winston": "^3.13.0"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
 }

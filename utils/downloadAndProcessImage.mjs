@@ -17,7 +17,7 @@ export async function downloadAndProcessImage(fileId, title) {
 
         const outputFilePath = `/home/dev/koishi-meme/meme/${title}.webp`;
         fs.writeFileSync(outputFilePath, webpBuffer);
-        logger.info("Successfully saved image")
+        logger.info(`Successfully saved image - ${fileId} as ${title}.webp`)
     } catch (e) {
         logger.error("Error while trying to save the meme:", e)
     }
