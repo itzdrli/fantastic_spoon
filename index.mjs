@@ -2,14 +2,16 @@ import {Bot, GrammyError, HttpError, InputFile} from "grammy";
 import { logger } from "./utils/logger.mjs"
 import dotenv from 'dotenv'
 import { generateUpdateMiddleware } from "telegraf-middleware-console-time";
-import fs from "fs";
-import path from "path";
 
+import { shortUrlServer } from "./utils/shortUrlServer.mjs";
 import { memes } from "./modules/memes.mjs";
 import { surl } from "./modules/shortUrl.mjs";
+import { randMeme } from "./modules/randMeme.mjs";
 
 dotenv.config({ path: `./.env` });
 const token = process.env.TG_TOKEN
+
+shortUrlServer().then()
 
 export const bot = new Bot(token);
 
@@ -28,28 +30,9 @@ bot.catch((err) => {
 
 bot.use(generateUpdateMiddleware());
 
-bot.command("meme", async (ctx) => {
-    const imageFolder = "/home/dev/koishi-meme/meme/";
-    const files = fs.readdirSync(imageFolder);
-    const randomFile = files[Math.floor(Math.random() * files.length)];
-    const photo = new InputFile(path.join(imageFolder, randomFile));
-    const caption = randomFile.replace(/\.(png|jpg|jpeg|webp)$/i, '')
-    if (ctx.chat.type === "private") {
-        await ctx.api.sendPhoto(ctx.from.id.toString(), photo, {
-            caption: "# " + caption
-        })
-    } else {
-        await ctx.replyWithPhoto(
-            photo,
-            {
-                caption: "# " + caption
-            }
-        )
-    }
-});
-
 bot.command("help", (ctx) => ctx.reply(`
 /meme - random meme from meems.none.bot (koishi memes)
+/surl <url> - shorten a URL
 `))
 
 bot.command("start", (ctx) => ctx.reply(`
@@ -59,10 +42,11 @@ Open Sourced on Github: https://github.com/itzdrli/fantastic_spoon
 
 What can I do?
 - Send me your meme!
-- or do /meme to get a random meme
+- or /help
 `));
 
-memes().then()
 surl().then()
+randMeme().then()
+memes().then()
 
 bot.start().then()

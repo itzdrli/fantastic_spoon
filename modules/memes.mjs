@@ -43,6 +43,7 @@ export async function memes() {
         if (ctx.match[1] === 'yes') {
             userData.anonymous = true
         }
+        await ctx.api.editMessageText(userId, ctx.callbackQuery.message.message_id, '图片已发送至管理员等待审核。');
         await ctx.api.sendPhoto(adminUserId, userData.photoId, {
             caption: `来自用户 @${userData.username}(${userId}) 的图片,\n标题: ${userData.title}\n匿名: ${userData.anonymous ? '是' : '否'}`,
             reply_markup: new InlineKeyboard().text('批准', `approve:${userId}`).row().text('拒绝', `reject:${userId}`)
