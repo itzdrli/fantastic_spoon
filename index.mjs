@@ -1,4 +1,4 @@
-import {Bot, GrammyError, HttpError, InputFile} from "grammy";
+import {Bot, GrammyError, HttpError } from "grammy";
 import { logger } from "./utils/logger.mjs"
 import dotenv from 'dotenv'
 import { generateUpdateMiddleware } from "telegraf-middleware-console-time";
