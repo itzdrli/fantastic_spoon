@@ -1,17 +1,13 @@
 import {Bot, GrammyError, HttpError } from "grammy";
 import { logger } from "./utils/logger.mjs"
 import dotenv from 'dotenv'
-import { generateUpdateMiddleware } from "telegraf-middleware-console-time";
 
-import { shortUrlServer } from "./utils/shortUrlServer.mjs";
 import { memes } from "./modules/memes.mjs";
-import { surl } from "./modules/shortUrl.mjs";
 import { randMeme } from "./modules/randMeme.mjs";
 
 dotenv.config({ path: `./.env` });
 const token = process.env.TG_TOKEN
 
-shortUrlServer().then()
 
 export const bot = new Bot(token);
 
@@ -28,7 +24,7 @@ bot.catch((err) => {
     }
 })
 
-bot.use(generateUpdateMiddleware());
+// bot.use(generateUpdateMiddleware());
 
 bot.command("help", (ctx) => ctx.reply(`
 /meme - random meme from meems.none.bot (koishi memes)
@@ -45,8 +41,33 @@ What can I do?
 - or /help
 `));
 
-surl().then()
 randMeme().then()
 memes().then()
+
+async function checkObjects() {
+    try {
+        const response = await fetch('https://koishi.itzdrli.com');
+        
+        if (!response.ok) {
+            logger.error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        const objectsLength = data.objects.length;
+        if (objectsLength === 1700) return
+        if (objectsLength % 100 === 0) {
+            await bot.api.sendMessage('@itzdtech', 'Koishi plugin market has reached ' + objectsLength.toString() + ' plugins!')
+            logger.info('Koishi plugin market has reached ' + objectsLength.toString() + ' plugins!')
+            return objectsLength.toString()
+        } else return ''
+    } catch (error) {
+        logger.error('Error fetching data:', error);
+    }
+}
+
+checkObjects()
+
+setInterval(checkObjects, 6 * 60 * 60 * 1000)
 
 bot.start().then()
