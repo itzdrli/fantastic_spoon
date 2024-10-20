@@ -5,7 +5,7 @@ import path from "path";
 
 export async function randMeme() {
   bot.command("meme", async (ctx) => {
-    const imageFolder = "/home/dev/koishi-meme/meme/";
+    const imageFolder = "/home/dev/koishi-meme/public/meme/";
     const files = fs.readdirSync(imageFolder);
     const randomFile = files[Math.floor(Math.random() * files.length)];
     const photo = new InputFile(path.join(imageFolder, randomFile));

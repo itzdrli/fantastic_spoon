@@ -6,16 +6,30 @@ import { downloadAndProcessImage } from "../utils/downloadAndProcessImage.mjs";
 const userImages = new Map();
 
 const adminUserId = '5361485758';
-const channelId = '@itzdtech';
+const channelId = '@koimemes';
 
 export async function memes() {
-    bot.on(':photo', async (ctx) => {
+    bot.on([':photo', ':document'], async (ctx) => {
         if (ctx.chat.type !== 'private') {
             return;
         }
+        
+        let photoId;
+        if (ctx.msg.photo) {
+            photoId = ctx.msg.photo.pop().file_id;
+        } else if (ctx.msg.document) {
+            const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
+            const fileName = ctx.msg.document.file_name.toLowerCase();
+            if (allowedExtensions.some(ext => fileName.endsWith(ext))) {
+                photoId = ctx.msg.document.file_id;
+            } else {
+                await ctx.reply('请发送图片文件或照片。');
+                return;
+            }
+        }
+
         const userId = ctx.from.id.toString();
-        const photoId = ctx.msg.photo.pop().file_id;
-        const username = ctx.from.username
+        const username = ctx.from.username;
         userImages.set(userId.toString(), { photoId, title: '', userId, username, anonymous: false});
 
         await ctx.reply('请输入图片的标题:');
@@ -57,7 +71,7 @@ export async function memes() {
         if (userImages.has(userId)) {
             const userData = userImages.get(userId);
 
-            let messageLink = "https://t.me/itzdtech/";
+            let messageLink = "https://t.me/koimemes/";
             if (action === 'approve') {
                 if (userData.anonymous) {
                     const res = await ctx.api.sendPhoto(channelId, userData.photoId, {

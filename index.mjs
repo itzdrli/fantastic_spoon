@@ -11,18 +11,18 @@ const token = process.env.TG_TOKEN
 
 export const bot = new Bot(token);
 
-bot.catch((err) => {
-    const ctx = err.ctx
-    logger.error(`Error while handling update ${ctx.update.update_id}:`);
-    const e = err.error;
-    if (e instanceof GrammyError) {
-        logger.error("Error in request:", e.description);
-    } else if (e instanceof HttpError) {
-        logger.error("Could not contact Telegram:", e);
-    } else {
-        logger.error("Unknown error:", e);
-    }
-})
+// bot.catch((err) => {
+//     const ctx = err.ctx
+//     logger.error(`Error while handling update ${ctx.update.update_id}:`);
+//     const e = err.error;
+//     if (e instanceof GrammyError) {
+//         logger.error("Error in request:", e.description);
+//     } else if (e instanceof HttpError) {
+//         logger.error("Could not contact Telegram:", e);
+//     } else {
+//         logger.error("Unknown error:", e);
+//     }
+// })
 
 // bot.use(generateUpdateMiddleware());
 
@@ -43,31 +43,5 @@ What can I do?
 
 randMeme().then()
 memes().then()
-
-async function checkObjects() {
-    try {
-        const response = await fetch('https://koishi.itzdrli.com');
-        
-        if (!response.ok) {
-            logger.error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        const objectsLength = data.objects.length;
-        if (objectsLength === 1700) return
-        if (objectsLength % 100 === 0) {
-            await bot.api.sendMessage('@itzdtech', 'Koishi plugin market has reached ' + objectsLength.toString() + ' plugins!')
-            logger.info('Koishi plugin market has reached ' + objectsLength.toString() + ' plugins!')
-            return objectsLength.toString()
-        } else return ''
-    } catch (error) {
-        logger.error('Error fetching data:', error);
-    }
-}
-
-checkObjects()
-
-setInterval(checkObjects, 6 * 60 * 60 * 1000)
 
 bot.start().then()
