@@ -11,7 +11,7 @@
   "license": "AGPLv2",
   "private": false,
   "scripts": {
-    "dev": "pm2 start ecosystem.config.js"
+    "dev": "node index.mjs"
   },
   "dependencies": {
     "@octokit/rest": "^20.1.1",
