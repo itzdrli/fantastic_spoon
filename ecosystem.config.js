@@ -1,9 +1,12 @@
 module.exports = {
   apps : [{
-    name   : "fs",
+    name   : "fantastic_spoon",
     script : "./index.mjs",
     watch: true,
-    watch_delay: 5000,
+    watch_delay: 1000,
     ignore_watch : ["node_modules", "logs", ".git"],
+    autorestart: true,
+    max_restarts: 10,
+    restart_delay: 3000
   }]
 }

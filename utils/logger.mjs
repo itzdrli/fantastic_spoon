@@ -1,14 +1,29 @@
-import winston from 'winston'
+import { consola } from 'consola'
+import fs from 'fs'
 
 const date = new Date()
 const dateIso = date.toISOString().split('T')[0]
-export const logger = winston.createLogger({
-    format: winston.format.combine(
-        winston.format.timestamp({ format: 'MM-DD HH:mm:ss' }),
-        winston.format.printf(info => `[${info.level}][${info.timestamp}] ${info.message}`)
-    ),
-    transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: `./logs/${dateIso}.log` }),
-    ]
-});
+const logFilePath = `./logs/${dateIso}.log`
+
+export const logger = consola.create({
+  level: 4,
+  reporters: [
+    {
+      log: (logObj) => {
+        const { date, args } = logObj
+        const formattedDate = date.toLocaleString('zh-CN', { 
+          month: '2-digit', 
+          day: '2-digit', 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          second: '2-digit' 
+        })
+        const logMessage = `[${logObj.type}][${formattedDate}] ${args.join(' ')}\n`
+        
+        console.log(logMessage)
+        
+        fs.appendFileSync(logFilePath, logMessage)
+      }
+    }
+  ]
+})
