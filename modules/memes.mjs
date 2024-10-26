@@ -1,7 +1,7 @@
 import { InlineKeyboard } from 'grammy';
 import { bot } from "../index.mjs"
-import { logger } from "../utils/logger.mjs";
 import { downloadAndProcessImage } from "../utils/downloadAndProcessImage.mjs";
+import { commitAndPushMeme } from "../utils/gitOperations.mjs";
 
 // 使用对象来存储用户的多个投稿
 const userSubmissions = new Map();
@@ -99,7 +99,6 @@ export async function memes() {
     });
 }
 
-// 辅助函数
 function getPhotoId(ctx) {
     if (ctx.msg.photo) {
         return ctx.msg.photo.pop().file_id;
@@ -132,8 +131,14 @@ async function approveSubmission(ctx, userData, userId) {
     messageLink += res.message_id;
 
     await ctx.answerCallbackQuery('图片已审核通过并发送到频道.');
-    await downloadAndProcessImage(userData.photoId, userData.title);
+    await downloadAndProcessImage(userData.photoId, userData.title, userData.username);
     await ctx.api.sendMessage(userId, `您的图片已审核通过并发布.\n${messageLink}`);
+    const commitSuccess = await commitAndPushMeme(userData.title, userData.title);
+    if (commitSuccess) {
+        logger.info('成功提交并推送新的 meme 到 git 仓库');
+    } else {
+        logger.error('提交并推送新的 meme 到 git 仓库失败');
+    }
 }
 
 async function rejectSubmission(ctx, userId) {

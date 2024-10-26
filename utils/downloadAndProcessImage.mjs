@@ -3,7 +3,7 @@ import sharp from "sharp"
 import fs from "fs"
 import { logger } from "./logger.mjs";
 
-export async function downloadAndProcessImage(fileId, title) {
+export async function downloadAndProcessImage(fileId, title, username) {
     try {
         const pathResponse = await bot.api.getFile(fileId);
         const filePath = `https://api.telegram.org/file/bot${bot.token}/${pathResponse.file_path}`;
@@ -17,7 +17,7 @@ export async function downloadAndProcessImage(fileId, title) {
 
         const outputFilePath = `/home/dev/koishi-meme/public/meme/${title}.webp`;
         fs.writeFileSync(outputFilePath, webpBuffer);
-        logger.info(`Successfully saved image - "${fileId}" as "${title}.webp"`)
+        logger.info(`Successfully saved image "${fileId}" from user ${username} as "${title}.webp"`)
     } catch (e) {
         logger.error("Error while trying to save the meme:", e)
     }
