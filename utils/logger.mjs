@@ -11,7 +11,7 @@ export const logger = consola.create({
     {
       log: (logObj) => {
         const { date, args } = logObj
-        const formattedDate = date.toLocaleString('zh-CN', { 
+        const formattedDate = date.toLocaleString('en-US', { 
           month: '2-digit', 
           day: '2-digit', 
           hour: '2-digit', 
