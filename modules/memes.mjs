@@ -3,6 +3,8 @@ import { bot } from "../index.mjs"
 import { downloadAndProcessImage } from "../utils/downloadAndProcessImage.mjs";
 import { commitAndPushMeme } from "../utils/gitOperations.mjs";
 
+import { logger } from "../utils/logger.mjs";
+
 // 使用对象来存储用户的多个投稿
 const userSubmissions = new Map();
 
