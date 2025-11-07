@@ -9,7 +9,6 @@
   "repository": "https://github.com/itzdrli/fantastic_spoon.git",
   "author": "itzdrli <liletian1231@outlook.com>",
   "license": "AGPLv2",
-  "private": false,
   "scripts": {
     "dev": "node index.mjs"
   },
@@ -27,5 +26,5 @@
     "sharp": "^0.33.5",
     "winston": "^3.13.0"
   },
-  "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
+  "packageManager": "yarn@4.9.4"
 }
