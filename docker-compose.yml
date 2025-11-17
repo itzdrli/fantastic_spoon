@@ -1,0 +1,34 @@
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fantastic_spoon_tg
+    restart: unless-stopped
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - REVIEW_GROUP_ID=${REVIEW_GROUP_ID}
+      - ADMIN_IDS=${ADMIN_IDS}
+      - KMEME_USERNAME=${KMEME_USERNAME}
+      - KMEME_PASSWORD=${KMEME_PASSWORD}
+      - VALKEY_HOST=valkey
+      - VALKEY_PORT=6379
+    volumes:
+      - ./logs:/app/logs
+      - ./src:/app/src
+    env_file:
+      - .env
+    depends_on:
+      - valkey
+
+  valkey:
+    image: valkey/valkey:latest
+    container_name: fantastic_spoon_valkey
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - valkey_data:/data
+
+volumes:
+  valkey_data:
