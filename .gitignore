@@ -44,3 +44,6 @@ package-lock.json
 
 .idea/
 logs/
+fonts/IBMPlexSans-Regular.ttf
+fonts/NotoColorEmoji-Regular.ttf
+fonts/OPPOSansRegular.ttf

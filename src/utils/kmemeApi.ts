@@ -1,87 +1,86 @@
 import ky from "ky";
 import logger from "./logger";
 
-import { data, meme } from "../commands/randMeme";
-
 const BASE_URL = "https://kmeme.itzdrli.cc";
 
+export interface Meme {
+	id: string;
+	title: string;
+	imageUrl: string;
+	userId: string;
+	createdAt: string;
+}
+
 interface SignInResponse {
-  token: string;
+	token: string;
+}
+
+interface MemeResponse {
+	data: Meme;
 }
 
 class KMemeAPI {
-  private token: string | null = null;
-  private username: string;
-  private password: string;
+	private token: string | null = null;
+	private readonly username: string;
+	private readonly password: string;
 
-  constructor() {
-    this.username = process.env.KMEME_USERNAME || "";
-    this.password = process.env.KMEME_PASSWORD || "";
-  }
+	constructor() {
+		this.username = process.env.KMEME_USERNAME || "";
+		this.password = process.env.KMEME_PASSWORD || "";
+	}
 
-  async signIn(): Promise<void> {
-    try {
-      const response = await ky.post(`${BASE_URL}/auth/sign-in`, {
-        json: {
-          username: this.username,
-          password: this.password,
-        },
-      }).json<SignInResponse>();
+	private async signIn(): Promise<void> {
+		const response = await ky
+			.post(`${BASE_URL}/auth/sign-in`, {
+				json: { email: this.username, password: this.password },
+			})
+			.json<SignInResponse>();
+		this.token = response.token;
+		logger.info("✅ Signed in to kmeme");
+	}
 
-      this.token = response.token;
-      logger.info("✅ Sign In Success");
-    } catch (error) {
-      logger.error("❌ Sign In Failed:", error);
-      throw error;
-    }
-  }
+	private async ensureAuthenticated(): Promise<void> {
+		if (!this.token) await this.signIn();
+	}
 
-  private async ensureAuthenticated(): Promise<void> {
-    if (!this.token) {
-      await this.signIn();
-    }
-  }
+	async getRandomMeme(): Promise<Meme> {
+		const payload = await ky.get(`${BASE_URL}/meme/rand`).json<MemeResponse>();
+		return payload.data;
+	}
 
-  async postMeme(title: string, imageBuffer: Buffer, filename: string): Promise<void> {
-    await this.ensureAuthenticated();
+	async postMeme(title: string, imageBuffer: Buffer, filename: string): Promise<void> {
+		await this.ensureAuthenticated();
 
-    try {
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("file", new Blob([new Uint8Array(imageBuffer)]), filename);
+		const buildForm = () => {
+			const form = new FormData();
+			form.append("title", title);
+			form.append("file", new Blob([new Uint8Array(imageBuffer)]), filename);
+			return form;
+		};
 
-      const res = await ky.post(`${BASE_URL}/meme/post`, {
-        headers: {
-          Authorization: `Bearer ${this.token}`,
-        },
-        body: formData,
-      }).json<data>();
-      logger.info("✅ meme Posted with id: ", res.data.id);
-    } catch (error) {
-      logger.error("❌ Failed to post meme:", error);
-      
-      if (error instanceof Error && error.message.includes("401")) {
-        logger.info("🔄 Token Expired, retrying...");
-        this.token = null;
-        await this.ensureAuthenticated();
-        
-        const formData = new FormData();
-        formData.append("title", title);
-        formData.append("file", new Blob([new Uint8Array(imageBuffer)]), filename);
-
-        await ky.post(`${BASE_URL}/meme/post`, {
-          headers: {
-            Authorization: `Bearer ${this.token}`,
-          },
-          body: formData,
-        });
-        
-        logger.info("✅ meme Posted");
-      } else {
-        throw error;
-      }
-    }
-  }
+		try {
+			const res = await ky
+				.post(`${BASE_URL}/meme/post`, {
+					headers: { Authorization: `Bearer ${this.token}` },
+					body: buildForm(),
+				})
+				.json<MemeResponse>();
+			logger.info("✅ meme posted, id:", res.data.id);
+		} catch (error) {
+			if (error instanceof Error && error.message.includes("401")) {
+				logger.info("🔄 token expired, re-authenticating...");
+				this.token = null;
+				await this.ensureAuthenticated();
+				await ky.post(`${BASE_URL}/meme/post`, {
+					headers: { Authorization: `Bearer ${this.token}` },
+					body: buildForm(),
+				});
+				logger.info("✅ meme posted after re-auth");
+			} else {
+				throw error;
+			}
+		}
+	}
 }
 
 export const kmemeApi = new KMemeAPI();

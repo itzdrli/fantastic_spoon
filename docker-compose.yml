@@ -3,9 +3,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: fantastic_spoon_tg
+    container_name: fspoon-bot
     restart: unless-stopped
+    command: ["bun", "run", "dev"]
     environment:
+      - NODE_ENV=development
       - BOT_TOKEN=${BOT_TOKEN}
       - REVIEW_GROUP_ID=${REVIEW_GROUP_ID}
       - ADMIN_IDS=${ADMIN_IDS}
@@ -16,17 +18,19 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./src:/app/src
+      - ./fonts:/app/fonts
     env_file:
       - .env
     depends_on:
       - valkey
+    dns:
+      - 8.8.8.8
+      - 9.9.9.9
 
   valkey:
     image: valkey/valkey:latest
-    container_name: fantastic_spoon_valkey
+    container_name: fspoon-valkey
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     volumes:
       - valkey_data:/data
 
