@@ -5,25 +5,23 @@
 	"scripts": {
 		"dev": "bun run --watch src/index.ts",
 		"start": "bun run src/index.ts",
-		"lint": "oxlint src"
+		"lint": "oxlint src",
+		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
 		"@adze/transport-file": "^1.0.3",
 		"@takumi-rs/image-response": "^0.65.0",
 		"adze": "^2.2.5",
-		"dotenv": "^17.2.3",
 		"gramio": "^0.4.11",
-		"inspectable": "^3.0.2",
 		"ioredis": "^5.8.2",
 		"ky": "^1.14.0",
 		"react": "^19.2.3"
 	},
 	"devDependencies": {
-		"@types/bun": "latest",
+		"@types/bun": "^1.3.14",
 		"@types/node": "^24.10.1",
 		"@types/react": "^19.2.9",
 		"oxlint": "^1.0.0",
 		"typescript": "^5.9.3"
-	},
-	"module": "src/index.js"
+	}
 }

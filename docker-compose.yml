@@ -1,38 +1,54 @@
+# 生产编排:`docker compose -f docker-compose.yml up -d --build`
+# (不加载 override 即为纯生产:非 root、不挂载源码、日志用命名卷)
+#
+# 开发用法保持不变:直接 `docker compose up`(自动合并 docker-compose.override.yml)
+# 即得到热重载 + 源码挂载。
+
 services:
   bot:
     build:
       context: .
       dockerfile: Dockerfile
+    image: fspoon-bot:latest
     container_name: fspoon-bot
     restart: unless-stopped
-    command: ["bun", "run", "dev"]
+    env_file:
+      - .env
     environment:
-      - NODE_ENV=development
-      - BOT_TOKEN=${BOT_TOKEN}
-      - REVIEW_GROUP_ID=${REVIEW_GROUP_ID}
-      - ADMIN_IDS=${ADMIN_IDS}
-      - KMEME_USERNAME=${KMEME_USERNAME}
-      - KMEME_PASSWORD=${KMEME_PASSWORD}
+      - NODE_ENV=production
       - VALKEY_HOST=valkey
       - VALKEY_PORT=6379
     volumes:
-      - ./logs:/app/logs
-      - ./src:/app/src
-      - ./fonts:/app/fonts
-    env_file:
-      - .env
+      # 日志持久化(命名卷,首次挂载继承镜像内 /app/logs 的 bun 属主)
+      - fspoon_logs:/app/logs
     depends_on:
-      - valkey
+      valkey:
+        condition: service_healthy
     dns:
       - 8.8.8.8
       - 9.9.9.9
+    networks:
+      - fspoon
 
   valkey:
-    image: valkey/valkey:latest
+    image: valkey/valkey:9.1.2
     container_name: fspoon-valkey
     restart: unless-stopped
     volumes:
-      - valkey_data:/data
+      - fspoon_valkey_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG || valkey-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - fspoon
 
 volumes:
-  valkey_data:
+  fspoon_valkey_data:
+  fspoon_logs:
+
+networks:
+  fspoon:
+    driver: bridge

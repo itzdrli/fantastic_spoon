@@ -1,0 +1,18 @@
+# 开发覆盖:`docker compose up` 会自动与本文件合并。
+# 还原开发热重载体验:挂载源码 + watch 模式;以 root 运行避免宿主 ./logs 写权限问题。
+
+services:
+  bot:
+    container_name: fspoon-bot-dev
+    command: ["bun", "run", "dev"]
+    user: "0:0" # 开发态以 root 运行,日志 bind 挂载可直接写入
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./src:/app/src
+      - ./fonts:/app/fonts
+      - ./logs:/app/logs
+
+  valkey:
+    volumes:
+      - fspoon_valkey_data:/data

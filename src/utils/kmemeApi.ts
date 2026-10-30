@@ -1,7 +1,6 @@
-import ky from "ky";
+import ky, { HTTPError } from "ky";
+import { KMEME_BASE_URL, KMEME_PASSWORD, KMEME_USERNAME } from "../config";
 import logger from "./logger";
-
-const BASE_URL = "https://kmeme.itzdrli.cc";
 
 export interface Meme {
 	id: string;
@@ -19,66 +18,72 @@ interface MemeResponse {
 	data: Meme;
 }
 
+export class DuplicateTitleError extends Error {
+	constructor(title: string) {
+		super(`kmeme already has a meme titled "${title}"`);
+	}
+}
+
+function hasStatus(error: unknown, status: number): boolean {
+	return error instanceof HTTPError && error.response.status === status;
+}
+
 class KMemeAPI {
 	private token: string | null = null;
-	private readonly username: string;
-	private readonly password: string;
+	// 并发请求共用同一次登录
+	private signingIn: Promise<string> | null = null;
 
-	constructor() {
-		this.username = process.env.KMEME_USERNAME || "";
-		this.password = process.env.KMEME_PASSWORD || "";
-	}
-
-	private async signIn(): Promise<void> {
+	private async signIn(): Promise<string> {
 		const response = await ky
-			.post(`${BASE_URL}/auth/sign-in`, {
-				json: { email: this.username, password: this.password },
+			.post(`${KMEME_BASE_URL}/auth/sign-in`, {
+				json: { email: KMEME_USERNAME, password: KMEME_PASSWORD },
 			})
 			.json<SignInResponse>();
-		this.token = response.token;
 		logger.info("✅ Signed in to kmeme");
+		return response.token;
 	}
 
-	private async ensureAuthenticated(): Promise<void> {
-		if (!this.token) await this.signIn();
+	private async getToken(): Promise<string> {
+		if (this.token) return this.token;
+		this.signingIn ??= this.signIn().finally(() => {
+			this.signingIn = null;
+		});
+		this.token = await this.signingIn;
+		return this.token;
 	}
 
-	async getRandomMeme(): Promise<Meme> {
-		const payload = await ky.get(`${BASE_URL}/meme/rand`).json<MemeResponse>();
-		return payload.data;
+	async getRandomMeme(): Promise<Meme | null> {
+		try {
+			const payload = await ky.get(`${KMEME_BASE_URL}/meme/rand`).json<MemeResponse>();
+			return payload.data;
+		} catch (error) {
+			if (hasStatus(error, 404)) return null;
+			throw error;
+		}
 	}
 
-	async postMeme(title: string, imageBuffer: Buffer, filename: string): Promise<void> {
-		await this.ensureAuthenticated();
-
-		const buildForm = () => {
+	async postMeme(title: string, imageBuffer: Buffer, filename: string): Promise<Meme> {
+		const post = async () => {
 			const form = new FormData();
 			form.append("title", title);
 			form.append("file", new Blob([new Uint8Array(imageBuffer)]), filename);
-			return form;
+			const res = await ky
+				.post(`${KMEME_BASE_URL}/meme/post`, {
+					headers: { Authorization: `Bearer ${await this.getToken()}` },
+					body: form,
+				})
+				.json<MemeResponse>();
+			return res.data;
 		};
 
 		try {
-			const res = await ky
-				.post(`${BASE_URL}/meme/post`, {
-					headers: { Authorization: `Bearer ${this.token}` },
-					body: buildForm(),
-				})
-				.json<MemeResponse>();
-			logger.info("✅ meme posted, id:", res.data.id);
+			return await post();
 		} catch (error) {
-			if (error instanceof Error && error.message.includes("401")) {
-				logger.info("🔄 token expired, re-authenticating...");
-				this.token = null;
-				await this.ensureAuthenticated();
-				await ky.post(`${BASE_URL}/meme/post`, {
-					headers: { Authorization: `Bearer ${this.token}` },
-					body: buildForm(),
-				});
-				logger.info("✅ meme posted after re-auth");
-			} else {
-				throw error;
-			}
+			if (hasStatus(error, 409)) throw new DuplicateTitleError(title);
+			if (!hasStatus(error, 401)) throw error;
+			logger.info("🔄 token expired, re-authenticating...");
+			this.token = null;
+			return await post();
 		}
 	}
 }

@@ -1,8 +1,11 @@
 import Redis from "ioredis";
+import { VALKEY_HOST, VALKEY_PORT } from "../config";
 import logger from "./logger";
 
-const VALKEY_HOST = process.env.VALKEY_HOST || "localhost";
-const VALKEY_PORT = parseInt(process.env.VALKEY_PORT || "6379");
+// 未完成的投稿 (等待标题/匿名选择) 一天后过期
+const SUBMISSION_TTL = 60 * 60 * 24;
+// 待审核的投稿保留 30 天
+const REVIEW_TTL = 60 * 60 * 24 * 30;
 
 class ValkeyClient {
 	private client: Redis;
@@ -23,30 +26,54 @@ class ValkeyClient {
 		await this.client.connect();
 	}
 
-	async setSubmission(userId: number, data: unknown): Promise<void> {
-		await this.client.set(`submission:${userId}`, JSON.stringify(data));
+	private async getJson<T>(key: string): Promise<T | null> {
+		const data = await this.client.get(key);
+		return data ? (JSON.parse(data) as T) : null;
 	}
 
-	async getSubmission(userId: number): Promise<unknown | null> {
-		const data = await this.client.get(`submission:${userId}`);
-		return data ? JSON.parse(data) : null;
+	// GETDEL 是原子操作: 并发点击时只有一个请求能拿到数据
+	private async takeJson<T>(key: string): Promise<T | null> {
+		const data = await this.client.getdel(key);
+		return data ? (JSON.parse(data) as T) : null;
 	}
 
-	async deleteSubmission(userId: number): Promise<void> {
-		await this.client.del(`submission:${userId}`);
+	async setSubmission<T>(submissionId: string, data: T): Promise<void> {
+		await this.client.set(`submission:${submissionId}`, JSON.stringify(data), "EX", SUBMISSION_TTL);
 	}
 
-	async setSubmissionByReviewId(reviewMessageId: number, data: unknown): Promise<void> {
-		await this.client.set(`review:submission:${reviewMessageId}`, JSON.stringify(data));
+	async getSubmission<T>(submissionId: string): Promise<T | null> {
+		return this.getJson<T>(`submission:${submissionId}`);
 	}
 
-	async getSubmissionByReviewId(reviewMessageId: number): Promise<unknown | null> {
-		const data = await this.client.get(`review:submission:${reviewMessageId}`);
-		return data ? JSON.parse(data) : null;
+	async takeSubmission<T>(submissionId: string): Promise<T | null> {
+		return this.takeJson<T>(`submission:${submissionId}`);
 	}
 
-	async deleteSubmissionByReviewId(reviewMessageId: number): Promise<void> {
-		await this.client.del(`review:submission:${reviewMessageId}`);
+	// 记录用户当前等待标题的投稿
+	async setAwaitingCaption(userId: number, submissionId: string): Promise<void> {
+		await this.client.set(`awaiting-caption:${userId}`, submissionId, "EX", SUBMISSION_TTL);
+	}
+
+	async takeAwaitingCaption(userId: number): Promise<string | null> {
+		return this.client.getdel(`awaiting-caption:${userId}`);
+	}
+
+	async setSubmissionByReviewId<T>(reviewMessageId: number, data: T): Promise<void> {
+		await this.client.set(
+			`review:submission:${reviewMessageId}`,
+			JSON.stringify(data),
+			"EX",
+			REVIEW_TTL,
+		);
+	}
+
+	async takeSubmissionByReviewId<T>(reviewMessageId: number): Promise<T | null> {
+		return this.takeJson<T>(`review:submission:${reviewMessageId}`);
+	}
+
+	/** 在 ttlSeconds 内第一次调用返回 true, 之后返回 false */
+	async acquire(key: string, ttlSeconds: number): Promise<boolean> {
+		return (await this.client.set(`lock:${key}`, "1", "EX", ttlSeconds, "NX")) === "OK";
 	}
 
 	async disconnect(): Promise<void> {

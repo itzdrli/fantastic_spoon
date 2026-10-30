@@ -1,15 +1,31 @@
+# 依赖与构建产物
 node_modules
+*.tsbuildinfo
+
+# 版本控制 / 元数据
 .git
 .gitignore
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-logs/*.log
-*.log
-.DS_Store
+.gitattributes
 .idea
 .vscode
-README.md
-docker-compose.yml
+.editorconfig
+.oxlintrc.json
+.DS_Store
+
+# Docker 自身(无需进入镜像)
 Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose.override.yml
+
+# 环境与秘密 —— 严禁烤进镜像(compose 已通过 env_file 注入)
+.env
+.env.local
+.env.*.local
+
+# 日志(运行时由挂载/命名卷接管)
+logs
+*.log
+
+# 文档
+README.md
